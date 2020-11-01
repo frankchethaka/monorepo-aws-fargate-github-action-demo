@@ -27,15 +27,15 @@ jobs:
       - name: Update maven settings xml - Username
         uses: Mudlet/xmlstarlet-action@v1.1
         with:
-          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:username" -v ${{ github.actor }} ./maven-settings.xml > ./maven-settings.xml.tmp
+          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:username" -v ${{ github.actor }} ./maven_settings.xml > ./maven_settings.xml.tmp
       - name: Update maven-settings.xml - Username change
-        run: mv ./maven-settings.xml.tmp ./maven-settings.xml
+        run: mv ./maven_settings.xml.tmp ./maven_settings.xml
       - name: Update maven settings xml - Password
         uses: Mudlet/xmlstarlet-action@v1.1
         with:
-          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven-settings.xml > ./maven-settings.xml.tmp
+          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven_settings.xml > ./maven_settings.xml.tmp
       - name: Update maven-settings.xml - password change
-        run: mv ./maven-settings.xml.tmp ./maven-settings.xml
+        run: mv ./maven_settings.xml.tmp ./maven_settings.xml
       - name: Run docker build and push to GitHub Repo
         env: 
           DEPS_IMAGE: "monorepo_deps"
