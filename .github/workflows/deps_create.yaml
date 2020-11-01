@@ -42,7 +42,7 @@ jobs:
           REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
         run: | 
           sudo  login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          sudo  build -t ${{ REPO }}/${{ DEPS_IMAGE }}:${{ steps.cms_core_env.outputs.cms_version }} -f Dockerfile-deps .
-          sudp docker tag ${{ REPO }}/${{ DEPS_IMAGE }}:${{ steps.cms_core_env.outputs.cms_version }} ${{ GITHUB_REPOSITORY }}/${{ DEPS_IMAGE }}:latest
+          sudo  build -t $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }} -f Dockerfile-deps .
+          sudp docker tag $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }} $REPO/$DEPS_IMAGE:latest
           sudo docker push
         shell: bash
