@@ -1,6 +1,6 @@
 # Docker Multi-Stage Build uses for
-
-FROM maven:3.6.3-jdk-11 as deps
+ARG DEPS_IMAGE=maven:3.6.3-jdk-11
+FROM ${DEPS_IMAGE maven:3.6.3-jdk-11} as deps
 
 WORKDIR /opt/app
 
@@ -13,7 +13,7 @@ COPY pom.xml .
 
 RUN mvn -B -e -C org.apache.maven.plugins:maven-dependency-plugin:3.1.2:go-offline
 
-#
+# Copy maven build
 FROM maven:3.6.3-jdk-11 as builder
 WORKDIR /opt/app
 
@@ -23,3 +23,5 @@ COPY core-module/src core-module/src
 COPY web-module/src web-module/src
 
 RUN mvn -B -e clean install -DskipTests=true
+
+
