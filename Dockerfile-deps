@@ -1,5 +1,5 @@
 ARG DEPS_IMAGE=maven:3.6.3-jdk-11
-FROM ${DEPS_IMAGE1} as deps
+FROM ${DEPS_IMAGE} as deps
 
 WORKDIR /opt/app
 
@@ -10,4 +10,4 @@ COPY web-module/pom.xml web-module/pom.xml
 
 COPY pom.xml .
 
-RUN mvn dependency:go-offline
+RUN mvn -B -e -C dependency:go-offline -DexcludeArtifactIds=core-module
