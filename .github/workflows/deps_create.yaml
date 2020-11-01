@@ -27,13 +27,13 @@ jobs:
       - name: Load ENV Variables
         uses: falti/dotenv-action@v0.2.5
         id: monorepo_env
-      - name: Update maven settings xml : Username
+      - name: Update maven settings xml - Username
         uses: Mudlet/xmlstarlet-action@v1.1
         with:
           args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:username" -v ${{ github.actor }} ./maven-settings.xml > ./maven-settings.xml.tmp
       - name: Update maven-settings.xml - Username change
         run: mv ./maven-settings.xml.tmp ./maven-settings.xml
-      - name: Update maven settings xml : Password
+      - name: Update maven settings xml - Password
         uses: Mudlet/xmlstarlet-action@v1.1
         with:
           args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven-settings.xml > ./maven-settings.xml.tmp
