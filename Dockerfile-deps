@@ -10,4 +10,4 @@ COPY web-module/pom.xml web-module/pom.xml
 
 COPY pom.xml .
 
-RUN mvn -B -e -C dependency:go-offline -DexcludeArtifactIds=core-module
+RUN mvn -B -e -C org.apache.maven.plugins:maven-dependency-plugin:3.1.2:go-offline -DexcludeArtifactIds=core-module
