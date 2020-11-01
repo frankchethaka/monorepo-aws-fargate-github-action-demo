@@ -16,9 +16,6 @@ on:
 name: Build monorepo dependencies
 
 jobs:
-  env:
-    DEPS_IMAGE: "monorepo_deps"
-  
   create_deps:
     runs-on: ubuntu-latest
     steps:
@@ -40,6 +37,8 @@ jobs:
       - name: Update maven-settings.xml - password change
         run: mv ./maven-settings.xml.tmp ./maven-settings.xml
       - name: Run docker build and push to GitHub Repo
+        env: 
+          DEPS_IMAGE: "monorepo_deps"
         run: | 
           sudo  login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           sudo  build -t ${{ GITHUB_REPOSITORY }}/${{ DEPS_IMAGE }}:${{ steps.cms_core_env.outputs.cms_version }} -f Dockerfile-deps .
