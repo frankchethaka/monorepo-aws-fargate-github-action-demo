@@ -1,0 +1,48 @@
+# This workflow will download dependencies and cache in monorepo_deps image and push to GitHub Repo.  
+# Flow will perform following.
+# Trigger: Cron task
+# Workflow:
+#   job 1: Build images
+#     1. Checkout the Code
+#     2. Update maven settings file with GitHub token
+#     3. Build Docker image which will download the dependencies
+#     4. Push images to GitHub
+
+on:
+  push:
+    branches:
+      - main
+      
+name: Build monorepo dependencies
+
+jobs:
+  env:
+    DEPS_IMAGE: "monorepo_deps"
+  
+  create_deps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Load ENV Variables
+        uses: falti/dotenv-action@v0.2.5
+        id: monorepo_env
+      - name: Update maven settings xml : Username
+        uses: Mudlet/xmlstarlet-action@v1.1
+        with:
+          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:username" -v ${{ github.actor }} ./maven-settings.xml > ./maven-settings.xml.tmp
+      - name: Update maven-settings.xml - Username change
+        run: mv ./maven-settings.xml.tmp ./maven-settings.xml
+      - name: Update maven settings xml : Password
+        uses: Mudlet/xmlstarlet-action@v1.1
+        with:
+          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven-settings.xml > ./maven-settings.xml.tmp
+      - name: Update maven-settings.xml - password change
+        run: mv ./maven-settings.xml.tmp ./maven-settings.xml
+      - name: Run docker build and push to GitHub Repo
+        run: | 
+          sudo  login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          sudo  build -t ${{ GITHUB_REPOSITORY }}/${{ DEPS_IMAGE }}:${{ steps.cms_core_env.outputs.cms_version }} -f Dockerfile-deps .
+          sudp docker tag ${{ GITHUB_REPOSITORY }}/${{ DEPS_IMAGE }}:${{ steps.cms_core_env.outputs.cms_version }} ${{ GITHUB_REPOSITORY }}/${{ DEPS_IMAGE }}:latest
+          sudo docker push
+        shell: bash
