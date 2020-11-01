@@ -31,7 +31,7 @@ jobs:
       - name: Update maven settings xml - Password
         uses: Mudlet/xmlstarlet-action@v1.1
         with:
-          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven_settings.xml > ./maven_settings.xml.tmp
+          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven_settings.xml
       - name: Run docker build and push to GitHub Repo
         env: 
           DEPS_IMAGE: "monorepo_deps"
