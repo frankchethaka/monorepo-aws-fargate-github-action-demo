@@ -1,8 +1,9 @@
 # Docker Multi-Stage Build uses for
 ARG DEPS_IMAGE=maven:3.6.3-jdk-11
-FROM ${DEPS_IMAGE maven:3.6.3-jdk-11} as deps
+FROM ${DEPS_IMAGE} as deps
 
 WORKDIR /opt/app
+RUN rm -rf core-module web-module
 
 COPY maven_settings.xml /root/.m2/settings.xml
 
