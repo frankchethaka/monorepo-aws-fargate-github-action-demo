@@ -1,7 +1,16 @@
 ARG DEPS_IMAGE='docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo/monorepo_deps'
-FROM ${DEPS_IMAGE1} as builder
+FROM ${DEPS_IMAGE} as builder
+
+WORKDIR /opt/app
 
 COPY core-module/src core-module/src
 COPY web-module/src web-module/src
 
 RUN mvn -B -e clean install -DskipTests=true
+
+
+FROM alpine:3
+WORKDIR /opt/app
+
+COPY --from=builder /opt/app/core-module/target core-module/target
+COPY --from=builder /opt/app/web-module/target web-module/target
