@@ -1,2 +1,13 @@
 ARG DEPS_IMAGE=maven:3.6.3-jdk-11
 FROM ${DEPS_IMAGE1} as deps
+
+WORKDIR /opt/app
+
+COPY maven_settings.xml /root/.m2/settings.xml
+
+COPY core-module/pom.xml core-module/pom.xml
+COPY web-module/pom.xml web-module/pom.xml
+
+COPY pom.xml .
+
+RUN mvn dependency:go-offline
