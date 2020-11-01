@@ -1,0 +1,2 @@
+ARG DEPS_IMAGE=maven:3.6.3-jdk-11
+FROM ${DEPS_IMAGE1} as deps
