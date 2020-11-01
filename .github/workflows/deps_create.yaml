@@ -40,5 +40,6 @@ jobs:
           sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           sudo docker build -t $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }} -f Dockerfile-deps .
           sudo docker tag $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }} $REPO/$DEPS_IMAGE:latest
-          sudo docker push
+          sudo docker push $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }}
+          sudo docker push $REPO/$DEPS_IMAGE:latest
         shell: bash
