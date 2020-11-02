@@ -58,3 +58,11 @@ jobs:
           sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:latest
           echo "::set-output name=image::$REPO/${{ matrix.IMAGE_NAME }}:${{ steps.cms_core_env.outputs.cms_version }}"
         shell: bash
+
+  deploy_containers:
+    runs-on: ubuntu-latest
+    needs: build_images
+    steps:
+      - run: echo '${{ needs.build_images.outputs.built_image_list }}'
+      - run: echo '${{ toJson(needs.build_images.outputs.built_image_list) }}'
+      - run: echo '${{ toJson(needs.build_images.outputs) }}'
