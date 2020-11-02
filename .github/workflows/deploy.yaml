@@ -1,6 +1,7 @@
-# This workflow will download dependencies and cache in monorepo_deps image and push to GitHub Repo.  
+# This workflow will create docker image per module and push to GitHub Repo. Once done,
+# it will perform deploy to AWS Fargate.
 # Flow will perform following.
-# Trigger: Cron task
+# Trigger: Push on a branch
 # Workflow: Build monorepo dependencies and push to GitHub Repo
 #   job 1: Build images
 #     1. Checkout the Code
@@ -9,14 +10,25 @@
 #     4. Push images to GitHub
 
 on:
-  schedule:
-    - cron '10 0 * * *'
+  push:
+    branches:
+      - main
       
-name: Build monorepo dependencies
+name: Build monorepo modules and deploy to AWS Fargate
 
 jobs:
-  create_deps:
+  build_images:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [core-module, web-module]
+        includes:
+          - module: core-module
+            MODULE_DIR: ./core-module
+            IMAGE_NAME: core_module
+          - module: web-module
+            MODULE_DIR: ./web-module
+            IMAGE_NAME: web_module
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -32,13 +44,14 @@ jobs:
         with:
           args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven_settings.xml
       - name: Run docker build and push to GitHub Repo
-        env: 
-          DEPS_IMAGE: "monorepo_deps"
+        env:
           REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
-        run: | 
+        run: |
+          cd ${{ matrix.MODULE_DIR }}
           sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          sudo docker build -t $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }} -f Dockerfile-deps .
-          sudo docker tag $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }} $REPO/$DEPS_IMAGE:latest
-          sudo docker push $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }}
-          sudo docker push $REPO/$DEPS_IMAGE:latest
+          sudo docker build -t $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.monorepo_env.outputs.app_version }} -f Dockerfile .
+          sudo docker tag $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.monorepo_env.outputs.app_version }} $REPO/${{ matrix.IMAGE_NAME }}:latest
+          sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.monorepo_env.outputs.app_version }}
+          sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:latest
+          echo "::set-output name=image::$REPO/${{ matrix.IMAGE_NAME }}:${{ steps.cms_core_env.outputs.cms_version }}"
         shell: bash
