@@ -21,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        module:
         includes:
           - module: core-module
             MODULE_DIR: ./core-module
