@@ -19,9 +19,11 @@ name: Build monorepo modules and deploy to AWS Fargate
 jobs:
   build_images:
     runs-on: ubuntu-latest
+    outputs:
+      built_image_list: ${{ steps.docker_build.outputs.image }}
     strategy:
       matrix:
-        includes:
+        include:
           - module: core-module
             MODULE_DIR: ./core-module
             IMAGE_NAME: core_module
@@ -43,6 +45,7 @@ jobs:
         with:
           args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven_settings.xml
       - name: Run docker build and push to GitHub Repo
+        id: docker_build
         env:
           REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
         run: |
