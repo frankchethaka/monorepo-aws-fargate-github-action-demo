@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        module: [core-module, web-module]
+        module:
         includes:
           - module: core-module
             MODULE_DIR: ./core-module
@@ -47,6 +47,7 @@ jobs:
         env:
           REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
         run: |
+          echo "::debug::Set Building docker image for module - ${{ matrix.module }}"
           cd ${{ matrix.MODULE_DIR }}
           sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           sudo docker build -t $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.monorepo_env.outputs.app_version }} -f Dockerfile .
