@@ -52,6 +52,7 @@ jobs:
         run: |
           sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           sudo docker build -t $REPO/$BUILD_IMAGE:${{ steps.monorepo_env.outputs.app_version }} -f Dockerfile-build .
+          echo "::set-output name=image::$REPO/$BUILD_IMAGE:${{ steps.cms_core_env.outputs.cms_version }}"
         shell: bash
 
       - name: Run docker build and push to GitHub Repo
