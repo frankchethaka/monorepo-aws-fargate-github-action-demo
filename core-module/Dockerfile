@@ -1,4 +1,4 @@
-ARG BUILDER_IMAGE=docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo/monorepo_build:latest
+ARG BUILDER_IMAGE='monorepo_deps'
 FROM ${BUILDER_IMAGE} as builder
 
 WORKDIR /opt/app
