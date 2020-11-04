@@ -45,15 +45,14 @@ jobs:
         with:
           args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven_settings.xml
       - name: Compile all modules and push to Docker Repo.
+        id: build_code
         env:
           BUILD_IMAGE: "monorepo_build"
           REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
         run: |
           sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           sudo docker build -t $REPO/$BUILD_IMAGE:${{ steps.monorepo_env.outputs.app_version }} -f Dockerfile-build .
-          sudo docker tag $REPO/$BUILD_IMAGE:${{ steps.monorepo_env.outputs.app_version }} $REPO/$BUILD_IMAGE:latest
-          sudo docker push $REPO/$BUILD_IMAGE:${{ steps.monorepo_env.outputs.app_version }}
-          sudo docker push $REPO/$BUILD_IMAGE:latest
+          echo "::set-output name=image::$REPO/$BUILD_IMAGE:${{ steps.cms_core_env.outputs.cms_version }}"
         shell: bash
 
       - name: Run docker build and push to GitHub Repo
@@ -64,7 +63,8 @@ jobs:
           echo "::debug::Set Building docker image for module - ${{ matrix.module }}"
           cd ${{ matrix.MODULE_DIR }}
           sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          sudo docker build -t $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.monorepo_env.outputs.app_version }} -f Dockerfile .
+          sudo docker build -t $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.monorepo_env.outputs.app_version }} \
+            --build-arg BUILDER_IMAGE=${{ steps.build_code.outputs.image }} -f Dockerfile .
           sudo docker tag $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.monorepo_env.outputs.app_version }} $REPO/${{ matrix.IMAGE_NAME }}:latest
           sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.monorepo_env.outputs.app_version }}
           sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:latest
