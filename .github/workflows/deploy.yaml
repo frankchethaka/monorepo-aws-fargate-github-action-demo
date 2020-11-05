@@ -63,7 +63,6 @@ jobs:
         run: |
           echo "::debug::Set Building docker image for module - ${{ matrix.module }}"
           cd ${{ matrix.MODULE_DIR }}
-          echo "${{ steps.repo_env.outputs }}" > env.json
           sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           sudo docker build -t $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }} \
             --build-arg BUILDER_IMAGE=$REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.app_version }} -f Dockerfile .
@@ -72,23 +71,5 @@ jobs:
           sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:latest
           echo "::set-output name=image::$REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.cms_version }}"
         shell: bash
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.6'
-      - name: Write ENV json file
-        run: |
-          python3 -c "import json; content = open('.env', 'r').readlines(); content = [x.strip().split('=') for x in content if '=' in x]; print(json.dumps(dict(content)))" > env.json
-          cat env.json
-        shell: bash
-      - name: Create task-json file with jinja2
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: ${{ matrix.MODULE_DIR }}/task-def.json.j2
-          output_file: ${{ matrix.MODULE_DIR }}/task-def.json
-          data_file: env.json
-          data_format: json
-      - name: View task-def.json
-        run: cat ${{ matrix.MODULE_DIR }}/task-def.json
 
 
