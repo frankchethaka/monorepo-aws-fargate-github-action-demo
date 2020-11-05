@@ -50,7 +50,7 @@ jobs:
         run: |
           sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           sudo docker build -t $REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.app_version }} -f Dockerfile-build .
-          echo "::set-output name=image::$REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.cms_version }}"
+          echo "::set-output name=image::$REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.app_version }}"
         shell: bash
 
       - name: Run docker build and push to GitHub Repo
@@ -67,7 +67,7 @@ jobs:
           sudo docker tag $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }} $REPO/${{ matrix.IMAGE_NAME }}:latest
           sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }}
           sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:latest
-          echo "::set-output name=image::$REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.cms_version }}"
+          echo "::set-output name=image::$REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }}"
         shell: bash
 
   prepare_task_def_file:
@@ -85,6 +85,9 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
+      - name: Load ENV Variables
+        uses: falti/dotenv-action@v0.2.5
+        id: repo_env
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -101,5 +104,15 @@ jobs:
           output_file: ${{ matrix.MODULE_DIR }}/task-def.json
           data_file: env.json
           data_format: json
+      - name: Fill in the new image ID in the Amazon Fargate task definition
+        id: task-def
+        env:
+          REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ matrix.MODULE_DIR }}/task-def.json
+          container-name: ${{ matrix.module }}
+          image: $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }}"
       - name: View task-def.json
         run: cat ${{ matrix.MODULE_DIR }}/task-def.json
+
