@@ -19,8 +19,6 @@ name: Build monorepo modules and deploy to AWS Fargate
 jobs:
   build_images:
     runs-on: ubuntu-latest
-    outputs:
-      built_image_list: ${{ steps.docker_build.outputs.image }}
     strategy:
       matrix:
         include:
@@ -72,4 +70,36 @@ jobs:
           echo "::set-output name=image::$REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.cms_version }}"
         shell: bash
 
-
+  prepare_task_def_file:
+    needs: build_images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - module: core-module
+            MODULE_DIR: ./core-module
+            IMAGE_NAME: core_module
+          - module: web-module
+            MODULE_DIR: ./web-module
+            IMAGE_NAME: web_module
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+      - name: Write ENV json file
+        run: |
+          python3 -c "import json; content = open('.env', 'r').readlines(); content = [x.strip().split('=') for x in content if '=' in x]; print(json.dumps(dict(content)))" > env.json
+          cat env.json
+        shell: bash
+      - name: Create task-json file with jinja2
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: ${{ matrix.MODULE_DIR }}/task-def.json.j2
+          output_file: ${{ matrix.MODULE_DIR }}/task-def.json
+          data_file: env.json
+          data_format: json
+      - name: View task-def.json
+        run: cat ${{ matrix.MODULE_DIR }}/task-def.json
