@@ -1,4 +1,4 @@
-ARG DEPS_IMAGE=maven:3.6.3-jdk-11
+ARG DEPS_IMAGE=maven:3.6.3-jdk-8
 FROM ${DEPS_IMAGE} as deps
 
 WORKDIR /opt/app
