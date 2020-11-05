@@ -7,7 +7,7 @@
   "executionRoleArn": "arn:aws:iam::366988762526:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
-      "name": "monorepo_core",
+      "name": "web-module",
       "image": "docker pull docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo/web_module:latest",
       "repositoryCredentials": {
           "credentialsParameter": "arn:aws:secretsmanager:us-east-2:366988762526:secret:healthwaymedical_github-kvo0lB"
