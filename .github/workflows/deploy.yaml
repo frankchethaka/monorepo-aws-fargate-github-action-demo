@@ -17,6 +17,8 @@ on:
 name: Build monorepo modules and deploy to AWS Fargate
 env:
   REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
+  BUILD_IMAGE: "monorepo_build"
+
 jobs:
   compile_code:
     runs-on: ubuntu-latest
@@ -37,7 +39,7 @@ jobs:
       - name: Compile all modules and push to Docker Repo.
         id: build_code
         env:
-          BUILD_IMAGE: "monorepo_build"
+          BUILD_IMAGE: ${{ env.BUILD_IMAGE }}
           REPO: ${{ env.REPO }}
         run: |
           sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
@@ -69,7 +71,7 @@ jobs:
       - name: Run docker build and push to GitHub Repo
         id: docker_build
         env:
-          BUILD_IMAGE: "monorepo_build"
+          BUILD_IMAGE: ${{ env.BUILD_IMAGE }}
           REPO: ${{ env.REPO }}
         run: |
           echo "::debug::Set Building docker image for module - ${{ matrix.module }}"
@@ -116,4 +118,14 @@ jobs:
       - name: View task-def.json
         run: |
           cat "${{ steps.task-def.outputs.task-definition }}"
+
+  drop_build_image:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Package Versions
+        uses: actions/delete-package-versions@v1.0.3
+        with:
+          package-name: ${{ env.BUILD_IMAGE }}
+
 
