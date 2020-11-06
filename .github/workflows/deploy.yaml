@@ -102,9 +102,8 @@ jobs:
         with:
           task-definition: ${{ matrix.MODULE_DIR }}/${{ matrix.module }}-task-def.json
           container-name: ${{ matrix.module }}
-          image: $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }}"
+          image: ${{ REPO }}/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }}"
       - name: View task-def.json
         run: |
-          echo ${{ matrix.module }}
           cat "${{ steps.task-def.outputs.task-definition }}"
 
