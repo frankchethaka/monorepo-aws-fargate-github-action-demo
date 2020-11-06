@@ -72,28 +72,6 @@ jobs:
           sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:latest
           echo "::set-output name=image::$REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }}"
         shell: bash
-
-  prepare_task_def_file:
-    needs: build_images
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - module: core-module
-            MODULE_DIR: ./core-module
-            IMAGE_NAME: core_module
-          - module: web-module
-            MODULE_DIR: ./web-module
-            IMAGE_NAME: web_module
-          - module: web-module2
-            MODULE_DIR: ./web-module
-            IMAGE_NAME: web_module2
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
-      - name: Load ENV Variables
-        uses: falti/dotenv-action@v0.2.5
-        id: repo_env
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -128,6 +106,5 @@ jobs:
       - name: View task-def.json
         run: |
           echo ${{ matrix.module }}
-          echo "${{ steps.task-def.outputs.task-definition }}"
-
+          cat "${{ steps.task-def.outputs.task-definition }}"
 
