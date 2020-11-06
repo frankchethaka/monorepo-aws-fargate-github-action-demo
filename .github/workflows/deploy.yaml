@@ -42,6 +42,7 @@ jobs:
         run: |
           sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
           sudo docker build -t $REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.app_version }} -f Dockerfile-build .
+          sudo docker push $REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.app_version }}
           echo "::set-output name=image::$REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.app_version }}"
         shell: bash
   deploy:
