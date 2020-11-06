@@ -112,7 +112,7 @@ jobs:
       - name: Create task-json file with jinja2
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: ${{ matrix.MODULE_DIR }}/task-def.json.j2
+          template: ${{ matrix.MODULE_DIR }}/task-def_${{ matrix.module }}.json.j2
           output_file: ${{ matrix.MODULE_DIR }}/${{ matrix.module }}-task-def.json
           data_file: env.${{ matrix.module }}.json
           data_format: json

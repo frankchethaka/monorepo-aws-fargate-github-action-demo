@@ -1,0 +1,39 @@
+{
+  "family": "monorepo_web",
+  "cpu": "256",
+  "memory": "512",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [ "FARGATE" ],
+  "executionRoleArn": "arn:aws:iam::366988762526:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "web-module2",
+      "image": "docker pull docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo/web_module2:latest",
+      "repositoryCredentials": {
+          "credentialsParameter": "arn:aws:secretsmanager:us-east-2:366988762526:secret:healthwaymedical_github-kvo0lB"
+      },
+      "portMappings": [
+        {
+          "hostPort": 8080,
+          "protocol": "tcp",
+          "containerPort": 8080
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "monorepo_web",
+          "awslogs-region": "ap-southeast-1",
+          "awslogs-stream-prefix": "monorepo_web-service"
+        }
+      },
+      "essential": true,
+      "environment": [
+        {"name": "SPRING_APPLICATION_NAME", "value": "monorepo_web2"},
+        {"name": "SPRING_CLOUD_CONFIG_URI", "value": "{{ SPRING_CLOUD_CONFIG_URI }}"},
+        {"name": "SPRING_PROFILES_ACTIVE", "value": "{{ SPRING_PROFILES_ACTIVE }}"},
+        {"name": "TZ", "value": "{{ TZ }}"}
+      ]
+    }
+  ]
+}
