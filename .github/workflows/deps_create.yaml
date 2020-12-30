@@ -28,7 +28,7 @@ jobs:
         project_type: [ maven ]
         include:
           - project_type: maven
-            IMAGE_NAME: monorepo_deps_node
+            IMAGE_NAME: monorepo_deps_maven
             DOCKERFILE: Maven-Deps-Dockerfile
 
     steps:
