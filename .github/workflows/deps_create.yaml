@@ -20,7 +20,7 @@ jobs:
   create_deps:
     runs-on: ubuntu-20.04
     env:
-      REPO: docker.pkg.github.com/healthwaymedical/cms-core
+      REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
       REGISTRY: docker.pkg.github.com
       REPOSITORY: monorepo-aws-fargate-github-action-demo
     strategy:
@@ -46,7 +46,7 @@ jobs:
         id: repo_env
       - name:  Run dependency docker image build and push to GitHub Repo
         id: docker_deps
-        uses: frankchethaka/docker-build-push@v0.0.3
+        uses: frankchethaka/docker-build-push@v0.0.4
         with:
           image: ${{ env.REPOSITORY }}/${{ matrix.IMAGE_NAME }}
           tag: latest
