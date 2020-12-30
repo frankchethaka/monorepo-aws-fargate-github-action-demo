@@ -22,7 +22,6 @@ jobs:
     env:
       REPO: docker.pkg.github.com/healthwaymedical/cms-core
       REGISTRY: docker.pkg.github.com
-      REGISTRY_TYPE: github
       REPOSITORY: monorepo-aws-fargate-github-action-demo
     strategy:
       max-parallel: 2
@@ -52,7 +51,6 @@ jobs:
           image: ${{ env.REPOSITORY }}/${{ matrix.IMAGE_NAME }}
           tag: latest
           registry: ${{ env.REGISTRY }}
-          registry_type:  ${{ env.REGISTRY_TYPE }}
           dockerfile: ${{ matrix.DOCKERFILE }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
