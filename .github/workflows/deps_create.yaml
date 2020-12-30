@@ -20,9 +20,8 @@ jobs:
   create_deps:
     runs-on: ubuntu-20.04
     env:
-      REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
       REGISTRY: docker.pkg.github.com
-      REPOSITORY: monorepo-aws-fargate-github-action-demo
+      REPOSITORY: frankchethaka/monorepo-aws-fargate-github-action-demo
     strategy:
       max-parallel: 2
       matrix:

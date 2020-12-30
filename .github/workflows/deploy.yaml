@@ -15,9 +15,8 @@ on:
 
 name: Build monorepo-aws-fargate-github-action-demo modules and deploy to AWS Fargate
 env:
-    REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
     REGISTRY: docker.pkg.github.com
-    REPOSITORY: monorepo-aws-fargate-github-action-demo
+    REPOSITORY: frankchethaka/monorepo-aws-fargate-github-action-demo
     DEPLOY_ENV: staging
 
 jobs:
@@ -62,6 +61,6 @@ jobs:
           dockerfile: ${{ matrix.DOCKERFILE }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          buildArgs: DEPS_IMAGE="${{ env.REPO }}/${{ matrix.DEPS_IMAGE_NAME }}:latest"
+          buildArgs: DEPS_IMAGE="${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ matrix.DEPS_IMAGE_NAME }}:latest"
 
 
