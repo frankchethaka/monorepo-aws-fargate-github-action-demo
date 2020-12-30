@@ -45,10 +45,9 @@ jobs:
         id: repo_env
       - name:  Run dependency docker image build and push to GitHub Repo
         id: docker_deps
-        uses: frankchethaka/docker-build-push@v0.0.7
+        uses: frankchethaka/docker-build-push@v0.0.9
         with:
           image: ${{ env.REPOSITORY }}/${{ matrix.IMAGE_NAME }}
-          tag: latest
           registry: ${{ env.REGISTRY }}
           dockerfile: ${{ matrix.DOCKERFILE }}
           username: ${{ github.actor }}
