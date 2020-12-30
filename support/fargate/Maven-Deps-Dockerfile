@@ -1,4 +1,4 @@
-ARG DEPS_IMAGE=maven:3.6.3-jdk-11
+ARG DEPS_IMAGE=maven:3.6-jdk-11
 # ARG DEPS_IMAGE='docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo/monorepo_deps_maven'
 FROM ${DEPS_IMAGE} as deps
 
@@ -13,7 +13,7 @@ COPY web-module/pom.xml web-module/pom.xml
 COPY pom.xml .
 RUN mvn -B -e -C org.apache.maven.plugins:maven-dependency-plugin:3.1.2:go-offline -DexcludeArtifactIds=core-module
 
-FROM maven:3.6.3-jdk-11
+FROM maven:3.6-jdk-11
 COPY --from=deps /root/.m2 /root/.m2
 COPY --from=deps /usr/share/maven/ref/repository /root/.m2/repository
 COPY --from=deps /usr/share/maven/ref/repository /usr/share/maven/ref/repository
