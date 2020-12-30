@@ -29,10 +29,11 @@ jobs:
         project_type: [ maven ]
         include:
           - project_type: maven
-            DEPS_IMAGE_NAME: monorepo_deps_node
-            BUILD_IMAGE_NAME: monorepo_build_node
+            DEPS_IMAGE_NAME: monorepo_deps_maven
+            BUILD_IMAGE_NAME: monorepo_build_maven
             DOCKERFILE: Maven-Builder-Dockerfile
-
+    outputs:
+      builder_tag: ${{ steps.build_code.outputs.tag }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -56,4 +57,47 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           buildArgs: DEPS_IMAGE="${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ matrix.DEPS_IMAGE_NAME }}:latest"
 
+  deploy:
+    needs: compile_code
+    runs-on: ubuntu-20.04
+    strategy:
+      max-parallel: 2
+      matrix:
+        include:
+          - module: core-module
+            MODULE_DIR: core-module
+            IMAGE_NAME: core-module
+            SERVICE_NAME: core-module
+            BUILD_IMAGE_NAME: monorepo_build_maven
+          - module: web-module
+            MODULE_DIR: web-module
+            IMAGE_NAME: web-module
+            SERVICE_NAME: web-module
+            BUILD_IMAGE_NAME: monorepo_build_maven
 
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Copy workflow content
+        run: |
+          cp -rp support/fargate/* ./
+          cp -rp support/fargate/.env ./
+          cp -rp support/secrets ./
+      - name: Load ENV Variables
+        uses: falti/dotenv-action@v0.2.5
+        id: repo_env
+      - name: Copy Secret files to modules
+        run: |
+          cp -rp secrets ${{ matrix.MODULE_DIR }}
+        shell: bash
+      - name:  Run docker build and push to GitHub Repo
+        id: docker_build
+        uses: frankchethaka/docker-build-push@v0.0.9
+        with:
+          image: ${{ env.REPOSITORY }}/${{ matrix.IMAGE_NAME }}
+          registry: ${{ env.REGISTRY }}
+          dockerfile: ${{ matrix.DOCKERFILE }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          buildArgs: BUILDER_IMAGE="${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ matrix.BUILD_IMAGE_NAME }}:${{ needs.compile_code.outputs.builder_tag }}",DOCKER_WORKING_DIR=${{ steps.repo_env.outputs.docker_working_dir }}
+          directory:  ${{ matrix.MODULE_DIR }}
