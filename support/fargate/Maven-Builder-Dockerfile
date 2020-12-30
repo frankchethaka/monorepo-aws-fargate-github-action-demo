@@ -6,7 +6,7 @@ WORKDIR /opt/app
 COPY secrets/maven-settings.xml /root/.m2/settings.xml
 COPY . /opt/app/
 
-RUN mvn -B -e clean install -DskipTests=true -Pdocker-release
+RUN mvn -B -e clean install -DskipTests=true
 
 FROM alpine:3
 WORKDIR /opt/app

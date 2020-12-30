@@ -10,14 +10,15 @@
 #     4. Push images to GitHub
 
 on:
-  schedule:
-    - cron: '10 0 * * *'
+  push:
+    branches:
+      - main
 
 name: Build monorepo-aws-fargate-github-action-demo modules and deploy to AWS Fargate
 env:
-    REGISTRY: docker.pkg.github.com
-    REPOSITORY: frankchethaka/monorepo-aws-fargate-github-action-demo
-    DEPLOY_ENV: staging
+  REGISTRY: docker.pkg.github.com
+  REPOSITORY: frankchethaka/monorepo-aws-fargate-github-action-demo
+  DEPLOY_ENV: staging
 
 jobs:
   compile_code:
@@ -53,10 +54,9 @@ jobs:
       - name: Compile all modules and push to Docker Repo.
         if: matrix.project_type == 'maven'
         id: build_code
-        uses: mr-smithers-excellent/docker-build-push@v4
+        uses: frankchethaka/docker-build-push@v0.0.9
         with:
           image: ${{ env.REPOSITORY }}/${{ matrix.BUILD_IMAGE_NAME }}
-          tag: ${{ steps.repo_env.outputs.app_version }}
           registry: ${{ env.REGISTRY }}
           dockerfile: ${{ matrix.DOCKERFILE }}
           username: ${{ github.actor }}
