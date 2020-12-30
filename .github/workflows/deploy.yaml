@@ -10,122 +10,58 @@
 #     4. Push images to GitHub
 
 on:
-  push:
-    branches:
-      - main
-      
-name: Build monorepo modules and deploy to AWS Fargate
+  schedule:
+    - cron: '10 0 * * *'
+
+name: Build cms-web modules and deploy to AWS Fargate
 env:
-  REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
-  BUILD_IMAGE: "monorepo_build"
+    REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
+    REGISTRY: docker.pkg.github.com
+    REPOSITORY: monorepo-aws-fargate-github-action-demo
+    DEPLOY_ENV: staging
 
 jobs:
   compile_code:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
-      - name: Load ENV Variables
-        uses: falti/dotenv-action@v0.2.5
-        id: repo_env
-      - name: Update maven settings xml - Username
-        uses: Mudlet/xmlstarlet-action@v1.1
-        with:
-          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:username" -v ${{ github.actor }} ./maven_settings.xml
-      - name: Update maven settings xml - Password
-        uses: Mudlet/xmlstarlet-action@v1.1
-        with:
-          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven_settings.xml
-      - name: Compile all modules and push to Docker Repo.
-        id: build_code
-        env:
-          BUILD_IMAGE: ${{ env.BUILD_IMAGE }}
-          REPO: ${{ env.REPO }}
-        run: |
-          sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          sudo docker build -t $REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.app_version }} -f Dockerfile-build .
-          sudo docker push $REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.app_version }}
-          echo "::set-output name=image::$REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.app_version }}"
-        shell: bash
-  deploy:
-    needs: compile_code
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
+      max-parallel: 2
       matrix:
+        project_type: [ maven ]
         include:
-          - module: core-module
-            MODULE_DIR: ./core-module
-            IMAGE_NAME: core_module
-          - module: web-module
-            MODULE_DIR: ./web-module
-            IMAGE_NAME: web_module
-          - module: web-module2
-            MODULE_DIR: ./web-module
-            IMAGE_NAME: web_module2
+          - project_type: maven
+            DEPS_IMAGE_NAME: monorepo_deps_node
+            BUILD_IMAGE_NAME: monorepo_build_node
+            DOCKERFILE: Maven-Builder-Dockerfile
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
+      - name: Copy workflow content
+        run: |
+          cp -rp support/fargate/* ./
+          cp -rp support/fargate/.env ./
+          cp -rp support/secrets ./
+      - name: Decrypt secret files
+        run: |
+          chmod +x ./.github/scripts/decrypt_secrets.sh
+          ./.github/scripts/decrypt_secrets.sh
+        shell: bash
+        env:
+          GITHUB_SECRET_PASSPHRASE: ${{ secrets.CI_GITHUB_RESOURCE_PAT }}
       - name: Load ENV Variables
         uses: falti/dotenv-action@v0.2.5
         id: repo_env
-      - name: Run docker build and push to GitHub Repo
-        id: docker_build
-        env:
-          BUILD_IMAGE: ${{ env.BUILD_IMAGE }}
-          REPO: ${{ env.REPO }}
-        run: |
-          echo "::debug::Set Building docker image for module - ${{ matrix.module }}"
-          cd ${{ matrix.MODULE_DIR }}
-          sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          sudo docker build -t $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }} \
-            --build-arg BUILDER_IMAGE=$REPO/$BUILD_IMAGE:${{ steps.repo_env.outputs.app_version }} -f Dockerfile .
-          sudo docker tag $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }} $REPO/${{ matrix.IMAGE_NAME }}:latest
-          sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }}
-          sudo docker push $REPO/${{ matrix.IMAGE_NAME }}:latest
-          echo "::set-output name=image::$REPO/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }}"
-        shell: bash
-      - name: Setup Python
-        uses: actions/setup-python@v2
+      - name: Compile all modules and push to Docker Repo.
+        if: matrix.project_type == 'maven'
+        id: build_code
+        uses: mr-smithers-excellent/docker-build-push@v4
         with:
-          python-version: '3.6'
-      - name: Write ENV json files per module
-        run: |
-          cat .env > .env.${{ matrix.module }}
-          while read line ; do key_name=$(echo $line | cut -f1 -d=); \
-            sed "/$key_name/d" .env.${{ matrix.module }} > .env.${{ matrix.module }}.tmp ; \
-            cat .env.${{ matrix.module }}.tmp > .env.${{ matrix.module }} ; \
-          done<${{ matrix.MODULE_DIR }}/.env_${{ matrix.module }} ;
-          cat ${{ matrix.MODULE_DIR }}/.env_${{ matrix.module }} >> .env.${{ matrix.module }}
-          python3 -c "import json; content = open('.env.${{ matrix.module }}', 'r').readlines(); content = [x.strip().split('=') for x in content if '=' in x]; print(json.dumps(dict(content)))" > env.${{ matrix.module }}.json
-          cat env.${{ matrix.module }}.json
-        shell: bash
-      - name: Create task-json file with jinja2
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: ${{ matrix.MODULE_DIR }}/task-def_${{ matrix.module }}.json.j2
-          output_file: ${{ matrix.MODULE_DIR }}/${{ matrix.module }}-task-def.json
-          data_file: env.${{ matrix.module }}.json
-          data_format: json
-      - name: Fill in the new image ID in the Amazon Fargate task definition
-        id: task-def
-        env:
-          REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: ${{ matrix.MODULE_DIR }}/${{ matrix.module }}-task-def.json
-          container-name: ${{ matrix.module }}
-          image: ${{ env.REPO }}/${{ matrix.IMAGE_NAME }}:${{ steps.repo_env.outputs.app_version }}
-      - name: View task-def.json
-        run: |
-          cat "${{ steps.task-def.outputs.task-definition }}"
-
-  drop_build_image:
-    needs: deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete Package Versions
-        uses: actions/delete-package-versions@v1.0.3
-        with:
-          package-name: ${{ env.BUILD_IMAGE }}
+          image: ${{ env.REPOSITORY }}/${{ matrix.BUILD_IMAGE_NAME }}
+          tag: ${{ steps.repo_env.outputs.app_version }}
+          registry: ${{ env.REGISTRY }}
+          dockerfile: ${{ matrix.DOCKERFILE }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          buildArgs: DEPS_IMAGE="${{ env.REPO }}/${{ matrix.DEPS_IMAGE_NAME }}:latest"
 
 

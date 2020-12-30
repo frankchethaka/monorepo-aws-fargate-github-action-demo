@@ -1,0 +1,16 @@
+ARG DEPS_IMAGE='docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo/monorepo_deps_maven'
+FROM ${DEPS_IMAGE} as builder
+
+WORKDIR /opt/app
+
+COPY secrets/maven-settings.xml /root/.m2/settings.xml
+COPY . /opt/app/
+
+RUN mvn -B -e clean install -DskipTests=true -Pdocker-release
+
+FROM alpine:3
+WORKDIR /opt/app
+
+COPY secrets secrets
+COPY --from=builder /opt/app/core-module/target core-module/target
+COPY --from=builder /opt/app/web-module/target web-module/target

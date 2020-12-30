@@ -8,37 +8,49 @@
 #     3. Build Docker image which will download the dependencies
 #     4. Push images to GitHub
 
+
 on:
-  schedule:
-    - cron: '10 0 * * *'
-      
-name: Build monorepo dependencies
+  push:
+    branches:
+      - main
+
+name: Build cms-core dependencies
 
 jobs:
   create_deps:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    env:
+      REPO: docker.pkg.github.com/healthwaymedical/cms-core
+      REGISTRY: docker.pkg.github.com
+      REPOSITORY: cms-core
+    strategy:
+      max-parallel: 2
+      matrix:
+        project_type: [ maven ]
+        include:
+          - project_type: maven
+            IMAGE_NAME: monorepo_deps_node
+            DOCKERFILE: Maven-Deps-Dockerfile
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
+      - name: Copy workflow content
+        run: |
+          cp -rp support/fargate/* ./
+          cp -rp support/fargate/.env ./
+          cp -rp support/secrets ./
+        shell: bash
       - name: Load ENV Variables
         uses: falti/dotenv-action@v0.2.5
-        id: monorepo_env
-      - name: Update maven settings xml - Username
-        uses: Mudlet/xmlstarlet-action@v1.1
+        id: repo_env
+      - name:  Run dependency docker image build and push to GitHub Repo
+        id: docker_deps
+        uses: mr-smithers-excellent/docker-build-push@v4
         with:
-          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:username" -v ${{ github.actor }} ./maven_settings.xml
-      - name: Update maven settings xml - Password
-        uses: Mudlet/xmlstarlet-action@v1.1
-        with:
-          args: ed -N p=http://maven.apache.org/SETTINGS/1.0.0  -u "/p:settings/p:servers/p:server/p:password" -v ${{ secrets.GITHUB_TOKEN }} ./maven_settings.xml
-      - name: Run docker build and push to GitHub Repo
-        env: 
-          DEPS_IMAGE: "monorepo_deps"
-          REPO: docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo
-        run: | 
-          sudo docker login https://docker.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          sudo docker build -t $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }} -f Dockerfile-deps .
-          sudo docker tag $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }} $REPO/$DEPS_IMAGE:latest
-          sudo docker push $REPO/$DEPS_IMAGE:${{ steps.monorepo_env.outputs.app_version }}
-          sudo docker push $REPO/$DEPS_IMAGE:latest
-        shell: bash
+          image: ${{ env.REPOSITORY }}/${{ matrix.IMAGE_NAME }}
+          tag: latest
+          registry: ${{ env.REGISTRY }}
+          dockerfile: ${{ matrix.DOCKERFILE }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
