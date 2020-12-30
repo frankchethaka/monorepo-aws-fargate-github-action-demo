@@ -14,7 +14,7 @@ on:
     branches:
       - main
 
-name: Build cms-core dependencies
+name: Build monorepo-aws-fargate-github-action-demo dependencies
 
 jobs:
   create_deps:
@@ -22,7 +22,7 @@ jobs:
     env:
       REPO: docker.pkg.github.com/healthwaymedical/cms-core
       REGISTRY: docker.pkg.github.com
-      REPOSITORY: cms-core
+      REPOSITORY: monorepo-aws-fargate-github-action-demo
     strategy:
       max-parallel: 2
       matrix:
