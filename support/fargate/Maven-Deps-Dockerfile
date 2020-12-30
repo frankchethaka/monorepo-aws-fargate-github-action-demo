@@ -1,5 +1,5 @@
-ARG DEPS_IMAGE=maven:3.6-jdk-11
-#ARG DEPS_IMAGE='docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo/monorepo_deps_maven'
+#ARG DEPS_IMAGE=maven:3.6-jdk-11
+ARG DEPS_IMAGE='docker.pkg.github.com/frankchethaka/monorepo-aws-fargate-github-action-demo/monorepo_deps_maven'
 FROM ${DEPS_IMAGE} as deps
 
 WORKDIR /opt/app
