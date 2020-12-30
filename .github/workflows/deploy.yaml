@@ -41,13 +41,6 @@ jobs:
           cp -rp support/fargate/* ./
           cp -rp support/fargate/.env ./
           cp -rp support/secrets ./
-      - name: Decrypt secret files
-        run: |
-          chmod +x ./.github/scripts/decrypt_secrets.sh
-          ./.github/scripts/decrypt_secrets.sh
-        shell: bash
-        env:
-          GITHUB_SECRET_PASSPHRASE: ${{ secrets.CI_GITHUB_RESOURCE_PAT }}
       - name: Load ENV Variables
         uses: falti/dotenv-action@v0.2.5
         id: repo_env
